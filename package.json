@@ -1,0 +1,12 @@
+{
+  "name": "master-oscar-ai",
+  "private": true,
+  "packageManager": "pnpm@9.15.0",
+  "scripts": {
+    "dev": "pnpm --parallel --filter @master-oscar/web --filter @master-oscar/api dev",
+    "build": "pnpm --recursive build",
+    "db:generate": "pnpm --filter @master-oscar/db generate",
+    "db:migrate": "pnpm --filter @master-oscar/db migrate",
+    "db:studio": "pnpm --filter @master-oscar/db studio"
+  }
+}

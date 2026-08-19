@@ -1,0 +1,95 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ProjectStatus {
+  ACTIVE
+  BUILDING
+  DEPLOYED
+  ERROR
+  ARCHIVED
+}
+
+enum RunStatus {
+  QUEUED
+  RUNNING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum UserRole {
+  OWNER
+  ADMIN
+  BUILDER
+  VIEWER
+}
+
+model User {
+  id        String    @id @default(cuid())
+  email     String    @unique
+  name      String?
+  passwordHash String?
+  role      UserRole  @default(BUILDER)
+  createdAt DateTime  @default(now())
+  projects  Project[]
+  sessions  Session[]
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model Project {
+  id          String        @id @default(cuid())
+  name        String
+  description String?
+  status      ProjectStatus  @default(ACTIVE)
+  ownerId     String
+  owner       User           @relation(fields: [ownerId], references: [id])
+  deployments Deployment[]
+  runs        AgentRun[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@index([ownerId])
+}
+
+model Deployment {
+  id          String        @id @default(cuid())
+  projectId   String
+  project     Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  environment String
+  version     String
+  url         String?
+  status      String
+  createdAt   DateTime      @default(now())
+
+  @@index([projectId])
+}
+
+model AgentRun {
+  id        String     @id @default(cuid())
+  projectId String
+  project   Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  prompt    String
+  status    RunStatus  @default(QUEUED)
+  output    Json?
+  createdAt DateTime   @default(now())
+  finishedAt DateTime?
+
+  @@index([projectId, createdAt])
+}
